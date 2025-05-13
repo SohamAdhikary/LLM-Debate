@@ -1,71 +1,103 @@
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-import asyncio
+import time
 
-# Fix event loop and torch path issues
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
+# Configuration
+MODEL_NAME = "microsoft/phi-2"
+MAX_TOKENS = 80  # Reduced for stability
 
-# Lightweight model loader
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(ttl=3600, show_spinner=False)  # Cache for 1 hour
 def load_model():
     try:
-        model_name = "microsoft/phi-2"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        # Initialize with progress
+        progress = st.progress(0, text="🚀 Loading AI model...")
+        
+        tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_NAME,
+            trust_remote_code=True
+        )
+        progress.progress(30)
+        
         model = AutoModelForCausalLM.from_pretrained(
-            model_name,
+            MODEL_NAME,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
             device_map="auto",
             trust_remote_code=True
         )
+        progress.progress(70)
+        
         tokenizer.pad_token = tokenizer.eos_token
+        progress.progress(100)
+        time.sleep(0.5)  # Let progress complete
+        
         return model, tokenizer
     except Exception as e:
-        st.error(f"⚠️ Model loading failed: {str(e)}")
+        st.error(f"❌ Model failed to load: {str(e)}")
         return None, None
 
-# Streamlit App
 def main():
-    st.set_page_config(page_title="LLM Debate", layout="centered")
+    # App config
+    st.set_page_config(
+        page_title="LLM Debate System",
+        page_icon="🧠",
+        layout="centered"
+    )
     st.title("🧠 LLM Debate System")
     
+    # Load model with visual feedback
     model, tokenizer = load_model()
     if model is None:
         st.stop()
     
-    claim = st.text_area("Enter a claim:", "Vaccines cause autism", height=100)
+    # User input
+    claim = st.text_area(
+        "Enter a controversial claim:",
+        "Vaccines cause autism",
+        height=100
+    )
     
     if st.button("Start Debate", type="primary"):
         with st.spinner("🤖 Agents are debating..."):
             try:
-                # Skeptic
-                skeptic = generate(model, tokenizer, 
-                                 f"Critique: {claim}\nIssues:")
-                # Advocate
-                advocate = generate(model, tokenizer,
-                                  f"Defend: {claim}\nRebuttal to: {skeptic}\nEvidence:")
+                # Generate debate
+                skeptic = generate(
+                    model, tokenizer,
+                    f"Critique this claim concisely: {claim}\nIssues:",
+                    MAX_TOKENS
+                )
                 
-                st.subheader("💬 Results")
-                st.markdown(f"**Skeptic:**\n\n{skeptic}")
-                st.markdown(f"**Advocate:**\n\n{advocate}")
+                advocate = generate(
+                    model, tokenizer,
+                    f"Defend this claim concisely: {claim}\nRebuttal to: {skeptic}\nEvidence:",
+                    MAX_TOKENS
+                )
                 
-                # Simple evaluation
-                evidence = "✅" if any(w in advocate.lower() for w in ["study", "research"]) else "❌"
-                st.metric("Evidence Found", evidence)
+                # Display results
+                st.subheader("💬 Debate Results")
+                st.markdown(f"**Claim:** {claim}")
+                with st.expander("Skeptic's Arguments"):
+                    st.write(skeptic)
+                with st.expander("Advocate's Defense"):
+                    st.write(advocate)
+                
+                # Evaluation
+                st.metric(
+                    "Evidence Quality",
+                    "✅ Found" if any(w in advocate.lower() for w in ["study", "research"]) else "❌ Missing"
+                )
                 
             except Exception as e:
                 st.error(f"Debate failed: {str(e)}")
 
-def generate(model, tokenizer, prompt, max_tokens=100):
+def generate(model, tokenizer, prompt, max_tokens):
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     outputs = model.generate(
         **inputs,
         max_new_tokens=max_tokens,
         pad_token_id=tokenizer.eos_token_id,
-        temperature=0.7
+        temperature=0.7,
+        do_sample=True
     )
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
