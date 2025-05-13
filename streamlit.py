@@ -1,73 +1,69 @@
 import streamlit as st
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
-import asyncio
+from transformers import pipeline
 
-# Fix event loop and torch path issues
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
+# Configuration - Using tiny model for reliability
+MODEL_NAME = "distilgpt2"  # Very lightweight model
+MAX_TOKENS = 50  # Conservative limit
 
-# Lightweight model loader
-@st.cache_resource(show_spinner=False)
-def load_model():
-    try:
-        model_name = "microsoft/phi-2"
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto",
-            trust_remote_code=True
-        )
-        tokenizer.pad_token = tokenizer.eos_token
-        return model, tokenizer
-    except Exception as e:
-        st.error(f"⚠️ Model loading failed: {str(e)}")
-        return None, None
-
-# Streamlit App
 def main():
-    st.set_page_config(page_title="LLM Debate", layout="centered")
-    st.title("🧠 LLM Debate System")
+    # Initialize first to prevent torch issues
+    st.set_page_config(
+        page_title="Debate System",
+        page_icon="💬",
+        layout="centered"
+    )
     
-    model, tokenizer = load_model()
-    if model is None:
-        st.stop()
+    @st.cache_resource(show_spinner=False)
+    def load_model():
+        try:
+            return pipeline(
+                'text-generation',
+                model=MODEL_NAME,
+                device=-1  # Force CPU for stability
+            )
+        except Exception as e:
+            st.error(f"Model loading failed: {str(e)}")
+            return None
+
+    st.title("💬 Mini Debate System")
     
-    claim = st.text_area("Enter a claim:", "Vaccines cause autism", height=100)
-    
-    if st.button("Start Debate", type="primary"):
-        with st.spinner("🤖 Agents are debating..."):
+    # Load model
+    with st.spinner("Loading AI components..."):
+        generator = load_model()
+        if generator is None:
+            st.stop()
+
+    # User input
+    claim = st.text_input(
+        "Enter a claim to debate:",
+        "Social media improves society"
+    )
+
+    if st.button("Start Debate"):
+        with st.spinner("Generating responses..."):
             try:
                 # Skeptic
-                skeptic = generate(model, tokenizer, 
-                                 f"Critique: {claim}\nIssues:")
+                skeptic = generator(
+                    f"Critique this in one sentence: {claim}",
+                    max_length=MAX_TOKENS,
+                    num_return_sequences=1
+                )[0]['generated_text']
+                
                 # Advocate
-                advocate = generate(model, tokenizer,
-                                  f"Defend: {claim}\nRebuttal to: {skeptic}\nEvidence:")
+                advocate = generator(
+                    f"Defend this in one sentence: {claim}",
+                    max_length=MAX_TOKENS,
+                    num_return_sequences=1
+                )[0]['generated_text']
                 
-                st.subheader("💬 Results")
-                st.markdown(f"**Skeptic:**\n\n{skeptic}")
-                st.markdown(f"**Advocate:**\n\n{advocate}")
-                
-                # Simple evaluation
-                evidence = "✅" if any(w in advocate.lower() for w in ["study", "research"]) else "❌"
-                st.metric("Evidence Found", evidence)
+                # Display
+                st.subheader("Results")
+                st.markdown(f"**Claim:** {claim}")
+                st.markdown(f"**Skeptic:** {skeptic}")
+                st.markdown(f"**Advocate:** {advocate}")
                 
             except Exception as e:
-                st.error(f"Debate failed: {str(e)}")
-
-def generate(model, tokenizer, prompt, max_tokens=100):
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=max_tokens,
-        pad_token_id=tokenizer.eos_token_id,
-        temperature=0.7
-    )
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+                st.error(f"Error generating debate: {str(e)}")
 
 if __name__ == "__main__":
     main()
