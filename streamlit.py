@@ -2,74 +2,69 @@ import streamlit as st
 from transformers import pipeline
 import time
 
-# Configuration - Using a smaller model
-MODEL_NAME = "facebook/opt-1.3b"  # More lightweight than Phi-2
-MAX_TOKENS = 60  # Further reduced for stability
-
-@st.cache_resource(show_spinner=False)
-def load_model():
-    try:
-        progress = st.progress(0, text="🚀 Loading AI model...")
-        generator = pipeline(
-            'text-generation', 
-            model=MODEL_NAME,
-            device="cuda" if torch.cuda.is_available() else "cpu"
-        )
-        progress.progress(100)
-        return generator
-    except Exception as e:
-        st.error(f"❌ Model failed to load: {str(e)}")
-        return None
+# Configuration - Using tiny model for reliability
+MODEL_NAME = "distilgpt2"  # Very lightweight model
+MAX_TOKENS = 50  # Conservative limit
 
 def main():
+    # Initialize first to prevent torch issues
     st.set_page_config(
-        page_title="LLM Debate System",
-        page_icon="🧠",
+        page_title="Debate System",
+        page_icon="💬",
         layout="centered"
     )
-    st.title("🧠 Debate System Lite")
     
-    generator = load_model()
-    if generator is None:
-        st.stop()
+    @st.cache_resource(show_spinner=False)
+    def load_model():
+        try:
+            return pipeline(
+                'text-generation',
+                model=MODEL_NAME,
+                device=-1  # Force CPU for stability
+            )
+        except Exception as e:
+            st.error(f"Model loading failed: {str(e)}")
+            return None
+
+    st.title("💬 Mini Debate System")
     
-    claim = st.text_area(
-        "Enter a claim:",
-        "Vaccines cause autism",
-        height=100
+    # Load model
+    with st.spinner("Loading AI components..."):
+        generator = load_model()
+        if generator is None:
+            st.stop()
+
+    # User input
+    claim = st.text_input(
+        "Enter a claim to debate:",
+        "Social media improves society"
     )
-    
+
     if st.button("Start Debate"):
-        with st.spinner("🤖 Agents are debating..."):
+        with st.spinner("Generating responses..."):
             try:
                 # Skeptic
                 skeptic = generator(
-                    f"Critique this claim: {claim}\nIssues:",
+                    f"Critique this in one sentence: {claim}",
                     max_length=MAX_TOKENS,
-                    do_sample=True
+                    num_return_sequences=1
                 )[0]['generated_text']
                 
                 # Advocate
                 advocate = generator(
-                    f"Defend this claim: {claim}\nRebuttal to: {skeptic}\nEvidence:",
+                    f"Defend this in one sentence: {claim}",
                     max_length=MAX_TOKENS,
-                    do_sample=True
+                    num_return_sequences=1
                 )[0]['generated_text']
                 
                 # Display
-                st.subheader("💬 Results")
-                with st.expander("Skeptic"):
-                    st.write(skeptic.split("Issues:")[-1].strip())
-                with st.expander("Advocate"):
-                    st.write(advocate.split("Evidence:")[-1].strip())
-                
-                # Simple evaluation
-                evidence = "✅" if any(w in advocate.lower() for w in ["study", "research"]) else "❌"
-                st.metric("Evidence Found", evidence)
+                st.subheader("Results")
+                st.markdown(f"**Claim:** {claim}")
+                st.markdown(f"**Skeptic:** {skeptic}")
+                st.markdown(f"**Advocate:** {advocate}")
                 
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"Error generating debate: {str(e)}")
 
 if __name__ == "__main__":
-    import torch  # Moved here to prevent early initialization
     main()
