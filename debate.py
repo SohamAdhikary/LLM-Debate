@@ -1,5 +1,3 @@
-!pip install -q transformers sentence-transformers torch
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
