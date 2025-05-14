@@ -1,8 +1,4 @@
-# PyTorch for deep learning
-torch==2.2.1
-# Hugging Face Transformers for NLP
-transformers==4.25.1
-# Sentence Transformers for text embeddings
-sentence-transformers==2.2.2
-# Streamlit for web app development
+torch==2.3.0
+transformers==4.40.1
+tokenizers==0.19.1
 streamlit>=1.25.0

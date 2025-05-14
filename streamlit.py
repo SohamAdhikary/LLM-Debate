@@ -21,7 +21,7 @@ def main():
             return pipeline(
                 'text-generation',
                 model=MODEL_NAME,
-                device="cpu",  # Force CPU for maximum compatibility
+                device=torch.device("cpu"),  # Force CPU for maximum compatibility
                 torch_dtype=torch.float32
             )
         except Exception as e:
@@ -74,7 +74,8 @@ def main():
                 # Simple evaluation
                 st.metric(
                     "Evidence Found",
-                    "✅ Yes" if any(w in advocate.lower() for w in ["study", "research"]) else "❌ No"
+                    "✅ Yes" if any(w in advocate.lower() for w in ["study", 
+"research"]) else "❌ No"
                 )
                 
             except Exception as e:
