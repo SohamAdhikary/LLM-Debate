@@ -15,26 +15,38 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer.pad_token = tokenizer.eos_token
 
 def generate(prompt, max_length=150):
-    inputs = tokenizer(prompt, return_tensors="pt", return_attention_mask=True)
-    outputs = model.generate(
-        **inputs,
-        max_length=max_length,
-        pad_token_id=tokenizer.eos_token_id
-    )
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    try:
+        inputs = tokenizer(prompt, return_tensors="pt", return_attention_mask=True)
+        outputs = model.generate(
+            **inputs,
+            max_length=max_length,
+            pad_token_id=tokenizer.eos_token_id
+        )
+        return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    except Exception as e:
+        print(f"Error during generation: {str(e)}")
+        return ""
 
 def free_debate(claim):
-    # Skeptic
-    skeptic_out = generate(f"Question this claim: {claim}\nPotential issues:")
-    
-    # Advocate
-    advocate_out = generate(f"Defend this claim: {claim}\nCounterarguments: {skeptic_out}\nDefense:")
-    
-    return {
-        "claim": claim,
-        "skeptic": skeptic_out.replace("Potential issues:", "").strip(),
-        "advocate": advocate_out.replace("Defense:", "").strip()
-    }
+    try:
+        # Skeptic
+        skeptic_out = generate(f"Question this claim: {claim}\nPotential issues:")
+        
+        # Advocate
+        advocate_out = generate(f"Defend this claim: {claim}\nCounterarguments: {skeptic_out}\nDefense:")
+        
+        return {
+            "claim": claim,
+            "skeptic": skeptic_out.replace("Potential issues:", "").strip(),
+            "advocate": advocate_out.replace("Defense:", "").strip()
+        }
+    except Exception as e:
+        print(f"Error during debate generation: {str(e)}")
+        return {
+            "claim": claim,
+            "skeptic": "Error generating skeptic response",
+            "advocate": "Error generating advocate response"
+        }
 
 # Run debate
 print("🚀 Starting debate (this may take 1-2 minutes on CPU)...")
