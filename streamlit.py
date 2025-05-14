@@ -1,10 +1,11 @@
 import streamlit as st
 from transformers import pipeline
 import torch
+import psutil
 
-# Improved model: larger, more coherent, but still lightweight and CPU-compatible
-MODEL_NAME = "tiiuae/falcon-rw-1b"  # Better than distilgpt2
-MAX_TOKENS = 100  # Increased for more complete answers
+# Configuration - Tiny, fast, and compatible model
+MODEL_NAME = "sshleifer/tiny-gpt2"
+MAX_TOKENS = 60  # Conservative for stability
 
 def main():
     st.set_page_config(
@@ -14,7 +15,7 @@ def main():
     )
     st.title("💬 Mini Debate System")
 
-    @st.cache_resource(show_spinner=False)
+    @st.cache_resource(show_spinner=True)
     def load_model():
         try:
             return pipeline(
@@ -27,18 +28,21 @@ def main():
             st.error(f"⚠️ Model loading failed: {str(e)}")
             return None
 
-    # Load model with status indicator
     status = st.empty()
     status.info("🚀 Initializing debate system...")
     generator = load_model()
-    
     if generator is None:
         st.stop()
     status.empty()
 
+    # Show memory usage (optional)
+    mem = psutil.virtual_memory()
+    st.caption(f"💾 Memory usage: {mem.percent}%")
+
+    # User input
     claim = st.text_input(
         "Enter a claim to debate:",
-        "Social media improves mental health"
+        "Climate change is a hoax"
     )
 
     if st.button("Start Debate"):
@@ -48,24 +52,17 @@ def main():
                     f"Critique this in one sentence: {claim}",
                     max_length=MAX_TOKENS,
                     num_return_sequences=1,
-                    temperature=0.8,
-                    top_p=0.95
+                    temperature=0.7,
+                    top_p=0.9
                 )[0]['generated_text']
 
                 advocate = generator(
                     f"Defend this in one sentence: {claim}",
                     max_length=MAX_TOKENS,
                     num_return_sequences=1,
-                    temperature=0.8,
-                    top_p=0.95
+                    temperature=0.7,
+                    top_p=0.9
                 )[0]['generated_text']
-
-                # Safeguard against model repetition
-                if any(skeptic.lower().count(p) > 3 for p in ["it's", "is a", claim.lower()]):
-                    skeptic = "⚠️ The model response was repetitive. Please rephrase the claim."
-
-                if any(advocate.lower().count(p) > 3 for p in ["it's", "is a", claim.lower()]):
-                    advocate = "⚠️ The model response was repetitive. Please rephrase the claim."
 
                 st.subheader("Results")
                 cols = st.columns(2)
@@ -74,13 +71,14 @@ def main():
                 with cols[1]:
                     st.markdown(f"**Advocate:**\n\n{advocate}")
 
+                # Simple evidence check
                 st.metric(
                     "Evidence Found",
                     "✅ Yes" if any(w in advocate.lower() for w in ["study", "research"]) else "❌ No"
                 )
 
             except Exception as e:
-                st.error(f"Generation error: {str(e)}")
+                st.error(f"⚠️ Generation error: {str(e)}")
 
 if __name__ == "__main__":
     main()
