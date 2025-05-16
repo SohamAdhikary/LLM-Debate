@@ -4,7 +4,7 @@ import torch
 import psutil
 
 # Configuration - Tiny, fast, and compatible model
-MODEL_NAME = "sshleifer/tiny-gpt2"
+MODEL_NAME = "distilgpt2"
 MAX_TOKENS = 60  # Conservative for stability
 
 def main():
