@@ -4,7 +4,7 @@ import torch
 import psutil
 
 # Configuration - Tiny, fast, and compatible model
-MODEL_NAME = "distilgpt2"
+MODEL_NAME = "mrm8488/t5-base-finetuned-common_gen"
 MAX_TOKENS = 60  # Conservative for stability
 
 def main():
