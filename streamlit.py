@@ -3,9 +3,10 @@ from transformers import pipeline
 import torch
 import psutil
 
-# Configuration - Tiny, fast, and compatible model
-MODEL_NAME = "mrm8488/t5-base-finetuned-common_gen"
-MAX_TOKENS = 60  # Conservative for stability
+# Configuration - instruction-tuned model suitable for debate-style generation
+MODEL_NAME = "google/flan-t5-small"
+TASK = "text2text-generation"
+MAX_TOKENS = 100  # Reasonable length for coherent responses
 
 def main():
     st.set_page_config(
@@ -19,10 +20,9 @@ def main():
     def load_model():
         try:
             return pipeline(
-                'text-generation',
+                TASK,
                 model=MODEL_NAME,
-                device=torch.device("cpu"),
-                torch_dtype=torch.float32
+                device=torch.device("cpu")
             )
         except Exception as e:
             st.error(f"⚠️ Model loading failed: {str(e)}")
@@ -49,19 +49,15 @@ def main():
         with st.spinner("Generating responses..."):
             try:
                 skeptic = generator(
-                    f"Critique this in one sentence: {claim}",
+                    f"Critique the idea: {claim}",
                     max_length=MAX_TOKENS,
-                    num_return_sequences=1,
-                    temperature=0.7,
-                    top_p=0.9
+                    num_return_sequences=1
                 )[0]['generated_text']
 
                 advocate = generator(
-                    f"Defend this in one sentence: {claim}",
+                    f"Defend the idea: {claim}",
                     max_length=MAX_TOKENS,
-                    num_return_sequences=1,
-                    temperature=0.7,
-                    top_p=0.9
+                    num_return_sequences=1
                 )[0]['generated_text']
 
                 st.subheader("Results")
