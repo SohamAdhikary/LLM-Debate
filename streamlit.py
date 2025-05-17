@@ -3,10 +3,10 @@ from transformers import pipeline
 import torch
 import psutil
 
-# Configuration - Instruction-tuned model suitable for debate-style generation
-MODEL_NAME = "google/flan-t5-small"
+# Configuration - Stronger instruction-tuned model
+MODEL_NAME = "google/flan-t5-base"
 TASK = "text2text-generation"
-MAX_TOKENS = 100  # Reasonable length for coherent responses
+MAX_TOKENS = 120  # Longer responses supported by this model
 
 def main():
     st.set_page_config(
@@ -35,7 +35,7 @@ def main():
         st.stop()
     status.empty()
 
-    # Show memory usage (optional)
+    # Show memory usage
     mem = psutil.virtual_memory()
     st.caption(f"💾 Memory usage: {mem.percent:.1f}%")
 
@@ -48,7 +48,7 @@ def main():
     if st.button("Start Debate"):
         with st.spinner("Generating responses..."):
             try:
-                # Improved prompts
+                # Instruction prompts
                 skeptic_prompt = f"Critique the following claim in a sentence: \"{claim}\". Give a reason it may be wrong."
                 advocate_prompt = f"Defend the following claim in a sentence: \"{claim}\". Provide a supporting point."
 
