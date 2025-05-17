@@ -48,10 +48,9 @@ def main():
     if st.button("Start Debate"):
         with st.spinner("Generating responses..."):
             try:
-                # Instruction prompts
-              skeptic_prompt = f"Give one reason why the following claim might be false: \"{claim}\""
-advocate_prompt = f"Give one reason why someone might believe the claim: \"{claim}\""
-
+                # Properly indented instruction prompts
+                skeptic_prompt = f"Give one reason why the following claim might be false: \"{claim}\""
+                advocate_prompt = f"Give one reason why someone might believe the claim: \"{claim}\""
 
                 skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
                 advocate = generator(advocate_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
