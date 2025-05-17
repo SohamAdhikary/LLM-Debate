@@ -46,15 +46,17 @@ def main():
     )
 
     if st.button("Start Debate"):
+        current_claim = claim  # Capture the current value of claim
+
         with st.spinner("Generating responses..."):
             try:
-                # Best prompt format for skeptic and advocate - ENSURE 'claim' IS THE CURRENT INPUT
+                # Best prompt format for skeptic and advocate - USE THE CAPTURED 'current_claim'
                 skeptic_prompt = (
-                    f'You are a critical analyst evaluating the following claim: "{claim}". '
+                    f'You are a critical analyst evaluating the following claim: "{current_claim}". '
                     'In one sentence, present a logical counterargument based on reasoning or evidence.'
                 )
                 advocate_prompt = (
-                    f'You are an expert supporting the following claim: "{claim}". '
+                    f'You are an expert supporting the following claim: "{current_claim}". '
                     'In one sentence, provide a compelling argument or supporting evidence.'
                 )
 
