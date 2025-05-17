@@ -3,7 +3,7 @@ from transformers import pipeline
 import torch
 import psutil
 
-# Configuration - instruction-tuned model suitable for debate-style generation
+# Configuration - Instruction-tuned model suitable for debate-style generation
 MODEL_NAME = "google/flan-t5-small"
 TASK = "text2text-generation"
 MAX_TOKENS = 100  # Reasonable length for coherent responses
@@ -37,28 +37,23 @@ def main():
 
     # Show memory usage (optional)
     mem = psutil.virtual_memory()
-    st.caption(f"💾 Memory usage: {mem.percent}%")
+    st.caption(f"💾 Memory usage: {mem.percent:.1f}%")
 
     # User input
     claim = st.text_input(
         "Enter a claim to debate:",
-        "Climate change is a hoax"
+        "College should be free for everyone"
     )
 
     if st.button("Start Debate"):
         with st.spinner("Generating responses..."):
             try:
-                skeptic = generator(
-                    f"Critique the idea: {claim}",
-                    max_length=MAX_TOKENS,
-                    num_return_sequences=1
-                )[0]['generated_text']
+                # Improved prompts
+                skeptic_prompt = f"Critique the following claim in a sentence: \"{claim}\". Give a reason it may be wrong."
+                advocate_prompt = f"Defend the following claim in a sentence: \"{claim}\". Provide a supporting point."
 
-                advocate = generator(
-                    f"Defend the idea: {claim}",
-                    max_length=MAX_TOKENS,
-                    num_return_sequences=1
-                )[0]['generated_text']
+                skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
+                advocate = generator(advocate_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
 
                 st.subheader("Results")
                 cols = st.columns(2)
@@ -70,7 +65,7 @@ def main():
                 # Simple evidence check
                 st.metric(
                     "Evidence Found",
-                    "✅ Yes" if any(w in advocate.lower() for w in ["study", "research"]) else "❌ No"
+                    "✅ Yes" if any(w in advocate.lower() for w in ["study", "research", "data", "proof"]) else "❌ No"
                 )
 
             except Exception as e:
