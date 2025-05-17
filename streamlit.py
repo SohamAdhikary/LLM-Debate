@@ -50,14 +50,12 @@ def main():
 
         with st.spinner("Generating responses..."):
             try:
-                # Best prompt format for skeptic and advocate - USE THE CAPTURED 'current_claim'
+                # Even more direct prompts
                 skeptic_prompt = (
-                    f'You are a critical analyst evaluating the following claim: "{current_claim}". '
-                    'In one sentence, present a logical counterargument based on reasoning or evidence.'
+                    f'Regarding the claim: "{current_claim}". State one strong reason why this claim is likely wrong.'
                 )
                 advocate_prompt = (
-                    f'You are an expert supporting the following claim: "{current_claim}". '
-                    'In one sentence, provide a compelling argument or supporting evidence.'
+                    f'Regarding the claim: "{current_claim}". State one strong reason why this claim is likely correct.'
                 )
 
                 skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
