@@ -48,9 +48,15 @@ def main():
     if st.button("Start Debate"):
         with st.spinner("Generating responses..."):
             try:
-                # Properly indented instruction prompts
-                skeptic_prompt = f"Give one reason why the following claim might be false: \"{claim}\""
-                advocate_prompt = f"Give one reason why someone might believe the claim: \"{claim}\""
+                # Best prompt format for skeptic and advocate
+                skeptic_prompt = (
+                    f'You are a critical analyst evaluating the following claim: "{claim}". '
+                    'In one sentence, present a logical counterargument based on reasoning or evidence.'
+                )
+                advocate_prompt = (
+                    f'You are an expert supporting the following claim: "{claim}". '
+                    'In one sentence, provide a compelling argument or supporting evidence.'
+                )
 
                 skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
                 advocate = generator(advocate_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
