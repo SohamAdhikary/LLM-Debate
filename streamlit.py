@@ -49,8 +49,9 @@ def main():
         with st.spinner("Generating responses..."):
             try:
                 # Instruction prompts
-                skeptic_prompt = f"Critique the following claim in a sentence: \"{claim}\". Give a reason it may be wrong."
-                advocate_prompt = f"Defend the following claim in a sentence: \"{claim}\". Provide a supporting point."
+              skeptic_prompt = f"Give one reason why the following claim might be false: \"{claim}\""
+advocate_prompt = f"Give one reason why someone might believe the claim: \"{claim}\""
+
 
                 skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
                 advocate = generator(advocate_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
