@@ -42,7 +42,7 @@ def main():
     # User input
     claim = st.text_input(
         "Enter a claim to debate:",
-        "College should be free for everyone"  # Default value
+        "Climate change is a hoax"  # Default value
     )
 
     if st.button("Start Debate"):
@@ -50,12 +50,12 @@ def main():
 
         with st.spinner("Generating responses..."):
             try:
-                # Even more direct prompts
+                # Refined prompts to encourage reasoning
                 skeptic_prompt = (
                     f'Regarding the claim: "{current_claim}". State one strong reason why this claim is likely wrong.'
                 )
                 advocate_prompt = (
-                    f'Regarding the claim: "{current_claim}". State one strong reason why this claim is likely correct.'
+                    f'Regarding the claim: "{current_claim}". State one potential reason why someone might believe this claim.'
                 )
 
                 skeptic = generator(skeptic_prompt, max_length=MAX_TOKENS)[0]["generated_text"]
